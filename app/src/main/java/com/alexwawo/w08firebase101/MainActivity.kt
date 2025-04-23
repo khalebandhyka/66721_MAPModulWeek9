@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,11 +48,11 @@ fun StudentRegistrationScreen(viewModel: StudentViewModel = viewModel()) {
     var studentId by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var program by remember { mutableStateOf("") }
-
     var currentPhone by remember { mutableStateOf("") }
     var phoneList by remember { mutableStateOf(listOf<String>()) }
+    var selectedStudentDocId by remember { mutableStateOf<String?>(null)}
 
-    Column(modifier = Modifier
+        Column(modifier = Modifier
         .padding(16.dp)
         .fillMaxSize()) {
 
@@ -78,42 +79,90 @@ fun StudentRegistrationScreen(viewModel: StudentViewModel = viewModel()) {
 
         if (phoneList.isNotEmpty()) {
             Text("Phone Numbers:", style = MaterialTheme.typography.labelLarge)
-            phoneList.forEach {
-                Text("- $it")
-            }
-        }
-
-        Button(onClick = {
-            viewModel.addStudent(Student(studentId, name, program, phoneList))
-            studentId = ""
-            name = ""
-            program = ""
-            phoneList = listOf()
-        }, modifier = Modifier.padding(top = 8.dp)) {
-            Text("Submit")
-        }
-
-        Divider(modifier = Modifier.padding(vertical = 16.dp))
-
-        Text("Student List", style = MaterialTheme.typography.titleMedium)
-
-        LazyColumn {
-            items(viewModel.students) { student ->
-                Column(modifier = Modifier.padding(8.dp)) {
-                    Text("ID: ${student.id}")
-                    Text("Name: ${student.name}")
-                    Text("Program: ${student.program}")
-                    if (student.phones.isNotEmpty()) {
-                        Text("Phones:")
-                        student.phones.forEach {
-                            Text("- $it", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                    Divider()
+            phoneList.forEachIndexed { index, phone ->
+                Row()
+                { Text("- $phone",)
+                Button(onClick = {
+                    phoneList = phoneList.toMutableList().also { it.removeAt(index) }
+                })
+                {
+                    Text("Remove")
+                }
                 }
             }
         }
-    }
+
+            Button(
+                onClick = {
+                    if (selectedStudentDocId != null) {
+
+                        viewModel.updateStudent(Student(selectedStudentDocId!!, studentId, name,
+                            program, phoneList))
+                        selectedStudentDocId = null
+                    } else {
+                        viewModel.addStudent(Student("", studentId, name,
+                            program, phoneList))
+                    }
+                    studentId = ""
+                    name = ""
+                    program = ""
+                    phoneList = listOf()
+                },
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Text(if (selectedStudentDocId != null) "Update" else
+                    "Submit")
+            }
+
+
+            Divider(modifier = Modifier.padding(vertical = 16.dp))
+
+        Text("Student List", style = MaterialTheme.typography.titleMedium)
+
+            LazyColumn {
+                items(viewModel.students) { student ->
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text("ID: ${student.id}")
+                        Text("Name: ${student.name}")
+                        Text("Program: ${student.program}")
+
+                        if (student.phones.isNotEmpty()) {
+                            Text("Phones:")
+                            student.phones.forEach {
+                                Text("- $it", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+
+                        // Row for Edit and Delete buttons
+                        Row(
+                            modifier = Modifier.padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(onClick = {
+                                studentId = student.id
+                                name = student.name
+                                program = student.program
+                                phoneList = student.phones
+                                selectedStudentDocId = student.docId
+                            }) {
+                                Text("Edit")
+                            }
+
+                            Button(
+                                onClick = {
+                                    viewModel.deleteStudent(student)
+                                }
+                            ) {
+                                Text("Delete")
+                            }
+                        }
+
+                        Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    }
+                }
+            }
+
+        }
 }
 
 
