@@ -4,6 +4,7 @@ data class Student(
     val id: String = "",
     val name: String = "",
     val program: String = "",
+    val docId: String = "",
     val phones: List<String> = emptyList()
 )
 
